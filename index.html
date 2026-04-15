@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator BMI - Cloud Computing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #e0e7ff;
+            --secondary: #10b981;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        /* Layout */
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Header / Logo Section */
+        .app-header {
+            grid-column: 1 / -1;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            max-width: 650px;
+            width: 100%;
+            padding: 2.5rem;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg-body);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .close-modal:hover {
+            background: #ffe4e6;
+            color: #ef4444;
+        }
+
+        .help-btn {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--border);
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            width: auto;
+            margin-top: 0;
+        }
+
+        .help-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        /* Shared Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+
+        /* Input Styles */
+        .input-wrap {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* Analysis Result */
+        #result-display {
+            margin-top: 2rem;
+            text-align: center;
+            display: none;
+            padding: 1.5rem;
+            background: var(--primary-light);
+            border-radius: 16px;
+        }
+
+        .bmi-val {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Table & History */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Chart Area */
+        .chart-container {
+            height: 300px;
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <div class="logo-icon">B</div>
+                Cloud BMI Tracker
+            </div>
+            <button class="help-btn" onclick="toggleModal(true)">
+                <span>ℹ️</span> Panduan & Fitur
+            </button>
+        </header>
+
+        <!-- Sidebar: Calculator -->
+        <aside class="calculator-sidebar">
+            <div class="card">
+                <h3 class="card-title">Kalkulator BMI</h3>
+                <div class="input-wrap">
+                    <label>Berat Badan (kg)</label>
+                    <input type="number" id="berat" placeholder="Contoh: 72.5" step="0.1">
+                </div>
+                <div class="input-wrap">
+                    <label>Tinggi Badan (cm)</label>
+                    <input type="number" id="tinggi" placeholder="Contoh: 170" step="0.1">
+                </div>
+                <button onclick="hitung()">Analisis Data</button>
+
+                <div id="result-display">
+                    <p style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 0.5rem;">Skor BMI Anda</p>
+                    <div id="hasil" class="bmi-val">--</div>
+                    <div id="status-badge" style="margin-top: 0.5rem;"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content: Chart & History -->
+        <main class="main-content">
+            <!-- Chart Card -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 class="card-title">Tren BMI Terakhir</h3>
+                <div class="chart-container">
+                    <canvas id="bmiChart"></canvas>
+                </div>
+            </div>
+
+            <!-- History Card -->
+            <div class="card">
+                <h3 class="card-title">Riwayat Pengukuran</h3>
+                <div style="overflow-x: auto;">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Berat</th>
+                                <th>Tinggi</th>
+                                <th>Skor BMI</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Help Modal Overlay -->
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal">
+            <button class="close-modal" onclick="toggleModal(false)">&times;</button>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">Dokumentasi & Fitur</h3>
+            <p style="color: var(--text-light); margin-bottom: 2rem;">Aplikasi manajemen kesehatan berbasis cloud untuk pemantauan indeks massa tubuh secara real-time.</p>
+            
+            <div class="doc-grid">
+                <div class="doc-card">
+                    <h4>🚀 Fitur Utama</h4>
+                    <ul style="padding-left: 1rem; color: var(--text-light); font-size: 0.9rem;">
+                        <li>Perhitungan BMI Presisi</li>
+                        <li>Penyimpanan Cloud (SQLite)</li>
+                        <li>Visualisasi Data Trend</li>
+                        <li>Analisis Status Gizi Otomatis</li>
+                    </ul>
+                </div>
+                <div class="doc-card">
+                    <h4>💎 Kelebihan</h4>
+                    <ul style="padding-left: 1rem; color: var(--text-light); font-size: 0.9rem;">
+                        <li>Ringan & Cepat (Go/Gin)</li>
+                        <li>Dashboard Modern</li>
+                        <li>Keamanan Data Lokal</li>
+                        <li>Mudah Digunakan</li>
+                    </ul>
+                </div>
+                <div class="doc-card" style="grid-column: 1 / -1; margin-top: 1rem;">
+                    <h4>🛠️ Teknologi</h4>
+                    <p style="color: var(--text-light); font-size: 0.9rem;">Sistem backend menggunakan <strong>Golang</strong> dengan database <strong>SQLite</strong> untuk menjamin efisiensi penyimpanan dan kecepatan akses data yang optimal.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bmiChart;
+
+        async function hitung() {
+            const b = document.getElementById('berat').value;
+            const t = document.getElementById('tinggi').value;
+            const resDisplay = document.getElementById('result-display');
+            const hasilText = document.getElementById('hasil');
+            const badge = document.getElementById('status-badge');
+
+            if (!b || !t) {
+                alert("Mohon masukkan data yang valid!");
+                return;
+            }
+
+            try {
+                const res = await fetch('http://13.211.121.128:8080/data', {
+                    method: 'POST',
+                    body: JSON.stringify({ berat: parseFloat(b), tinggi: parseFloat(t) }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await res.json();
+                
+                if (data.bmi) {
+                    hasilText.innerText = data.bmi;
+                    resDisplay.style.display = 'block';
+                    
+                    const status = getBMIStatus(parseFloat(data.bmi));
+                    badge.innerHTML = `<span class="badge" style="background: ${status.color}20; color: ${status.color}">${status.label}</span>`;
+                    
+                    loadHistory();
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        function getBMIStatus(bmi) {
+            if (bmi < 18.5) return { label: 'Underweight', color: '#f59e0b' };
+            if (bmi < 25) return { label: 'Normal', color: '#10b981' };
+            if (bmi < 30) return { label: 'Overweight', color: '#ef4444' };
+            return { label: 'Obesity', color: '#7f1d1d' };
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('http://13.211.121.128:8080/data');
+                const data = await res.json();
+                
+                const tbody = document.getElementById('history-body');
+                tbody.innerHTML = '';
+                
+                // Show only last 10 for chart
+                const chartData = [...data].reverse().slice(-10);
+                updateChart(chartData);
+
+                data.forEach((item, index) => {
+                    const status = getBMIStatus(parseFloat(item.bmi));
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.berat} kg</td>
+                        <td>${item.tinggi} cm</td>
+                        <td style="font-weight: 600;">${item.bmi}</td>
+                        <td><span class="badge" style="background: ${status.color}20; color: ${status.color}">${status.label}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Error loading data:", error);
+            }
+        }
+
+        function updateChart(data) {
+            const ctx = document.getElementById('bmiChart').getContext('2d');
+            const labels = data.map((_, i) => `Data ${i + 1}`);
+            const values = data.map(item => parseFloat(item.bmi));
+
+            if (bmiChart) {
+                bmiChart.destroy();
+            }
+
+            bmiChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Skor BMI',
+                        data: values,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { borderDash: [5, 5] }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Modal Logic
+        function toggleModal(show) {
+            const modal = document.getElementById('helpModal');
+            modal.style.display = show ? 'flex' : 'none';
+        }
+
+        // Close on overlay click
+        window.onclick = function(event) {
+            const modal = document.getElementById('helpModal');
+            if (event.target == modal) {
+                toggleModal(false);
+            }
+        }
+
+        window.onload = loadHistory;
+    </script>
+</body>
+</html>
